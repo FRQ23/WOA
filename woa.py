@@ -20,6 +20,44 @@ distances = {
 }
 for (city1, city2), distance in distances.items():
     G.add_edge(city1, city2, weight=distance)
+    
+# Definir las posiciones de los nodos para replicar la disposición de la imagen
+pos = {
+    "Tijuana": (0, 3),
+    "Tecate": (1.5, 3),
+    "Mexicali": (4, 3),
+    "Rosarito": (-0.1, 1.5),
+    "Ensenada": (0.5, 0),
+    "San Felipe": (3.5, -1),
+    "San Quintín": (0.5, -3),
+    "Guerrero negro": (2, -4)
+}
+
+# Definir los colores para cada nodo
+node_colors = {
+    "Tijuana": "skyblue",
+    "Rosarito": "lightcoral",
+    "Ensenada": "lightgreen",
+    "Tecate": "khaki",
+    "Mexicali": "lightpink",
+    "San Felipe": "lightcyan",
+    "San Quintín": "lightgoldenrodyellow",
+    "Guerrero negro": "lightgrey"
+}
+node_color_list = [node_colors[city] for city in G.nodes]
+
+# Dibujar el grafo con las posiciones personalizadas y etiquetar las distancias
+plt.figure(figsize=(12, 10))
+nx.draw(
+    G, pos, with_labels=True, node_size=2500, node_color=node_color_list,
+    font_size=12, font_weight="bold", edge_color="black"
+)
+nx.draw_networkx_edge_labels(
+    G, pos, edge_labels={(city1, city2): f"{distance}Km" for (city1, city2), distance in distances.items()}, font_size=10
+)
+
+plt.title("Grafo de ciudades en Baja California con colores")
+plt.show()
 
 print("Seleccione el número correspondiente a la ciudad de inicio y la ciudad de destino:")
 for idx, city in enumerate(cities):
@@ -35,14 +73,12 @@ end_city = cities[end_index]
 num_whales = 50  # Aumentar el número de "ballenas" para cubrir más rutas
 num_iterations = 100  # Aumentar el número de iteraciones para mejorar la optimización
 
-
 # Función para calcular la distancia de una ruta
 def evaluate_path(path):
     distance = 0
     for i in range(len(path) - 1):
         distance += G[path[i]][path[i + 1]]['weight']
     return distance
-
 
 # Generar una ruta aleatoria válida desde el inicio hasta el fin
 def generate_random_valid_path():
@@ -53,7 +89,6 @@ def generate_random_valid_path():
     except nx.NetworkXNoPath:
         return []
 
-
 # Inicializar ballenas (rutas posibles)
 whales = [generate_random_valid_path() for _ in range(num_whales)]
 whales = [path for path in whales if path]
@@ -61,14 +96,16 @@ best_path = min(whales, key=evaluate_path)
 best_distance = evaluate_path(best_path)
 best_distances_over_time = [best_distance]
 
+# Imprimir la mejor ruta inicial
+evaluated_distances = [evaluate_path(whale) for whale in whales]
+print(f"Ruta inicial encontrada con distancia {best_distance}: {' -> '.join(best_path)}")
 
-# Visualizar todas las rutas generadas por WOA en cada iteración
+# Función para visualizar todas las rutas generadas por WOA en cada iteración
 def visualize_all_routes(iteration, whales, best_distance):
-    pos = nx.spring_layout(G, seed=42)
     plt.figure(figsize=(16, 10))
 
     plt.subplot(1, 2, 1)
-    nx.draw(G, pos, with_labels=True, node_size=3500, node_color="lightblue", font_size=14, font_weight="bold")
+    nx.draw(G, pos, with_labels=True, node_size=3500, node_color=node_color_list, font_size=14, font_weight="bold")
     nx.draw_networkx_edge_labels(G, pos, edge_labels={(city1, city2): f"{distance}Km" for (city1, city2), distance in
                                                       distances.items()}, font_size=10)
 
@@ -89,8 +126,8 @@ def visualize_all_routes(iteration, whales, best_distance):
     plt.pause(0.5)
     plt.clf()
 
-
 # Ejecución del WOA en el grafo
+all_routes = []
 for iteration in range(num_iterations):
     a = 2 - iteration * (2 / num_iterations)
     for i, whale in enumerate(whales):
@@ -108,16 +145,23 @@ for iteration in range(num_iterations):
     if current_best_distance < best_distance:
         best_path = current_best_path
         best_distance = current_best_distance
+        print(f"Nueva mejor ruta encontrada en iteración {iteration + 1} con distancia {best_distance}: {' -> '.join(best_path)}")
+    all_routes.append((iteration + 1, current_best_path, current_best_distance))
 
     best_distances_over_time.append(best_distance)
     visualize_all_routes(iteration + 1, whales, best_distance)
 
+# Mostrar reporte de todas las soluciones encontradas
+print("\nReporte de soluciones:")
+print("Iteración | Ruta | Distancia")
+print("-" * 50)
+for iteration, route, distance in all_routes:
+    print(f"{iteration:10} | {' -> '.join(route):50} | {distance:10.2f} Km")
 
 # Visualizar la mejor ruta al final en rojo
 def visualize_best_route(final_best_path, final_best_distance):
-    pos = nx.spring_layout(G, seed=42)
     plt.figure(figsize=(12, 10))
-    nx.draw(G, pos, with_labels=True, node_size=3500, node_color="lightblue", font_size=14, font_weight="bold")
+    nx.draw(G, pos, with_labels=True, node_size=3500, node_color=node_color_list, font_size=14, font_weight="bold")
     nx.draw_networkx_edge_labels(G, pos, edge_labels={(city1, city2): f"{distance}Km" for (city1, city2), distance in
                                                       distances.items()}, font_size=10)
 
@@ -126,7 +170,6 @@ def visualize_best_route(final_best_path, final_best_distance):
 
     plt.title(f"Mejor ruta encontrada: {' -> '.join(final_best_path)}\nDistancia total: {final_best_distance} Km")
     plt.show()
-
 
 print(
     f"La mejor ruta encontrada de {start_city} a {end_city} es: {' -> '.join(best_path)} con una distancia de {best_distance} Km")
