@@ -56,7 +56,7 @@ nx.draw_networkx_edge_labels(
     G, pos, edge_labels={(city1, city2): f"{distance}Km" for (city1, city2), distance in distances.items()}, font_size=10
 )
 
-plt.title("Grafo de ciudades en Baja California con colores")
+plt.title("Grafo de ciudades en Baja California")
 plt.show()
 
 print("Seleccione el número correspondiente a la ciudad de inicio y la ciudad de destino:")
@@ -71,7 +71,7 @@ end_city = cities[end_index]
 
 # Configuración del WOA
 num_whales = 50  # Aumentar el número de "ballenas" para cubrir más rutas
-num_iterations = 100  # Aumentar el número de iteraciones para mejorar la optimización
+num_iterations = 3  # Aumentar el número de iteraciones para mejorar la optimización
 
 # Función para calcular la distancia de una ruta
 def evaluate_path(path):
